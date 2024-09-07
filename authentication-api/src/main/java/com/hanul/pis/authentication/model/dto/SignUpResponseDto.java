@@ -1,16 +1,16 @@
 package com.hanul.pis.authentication.model.dto;
 
 public class SignUpResponseDto {
-    private Long userId; // public user ID, different from the user's ID in the DB
+    private String userId; // public user ID, different from the user's ID in the DB
     private String firstName;
     private String lastName;
     private String email;
 
-    public Long getUserId() {
+    public String getUserId() {
         return userId;
     }
 
-    public void setUserId(Long userId) {
+    public void setUserId(String userId) {
         this.userId = userId;
     }
 

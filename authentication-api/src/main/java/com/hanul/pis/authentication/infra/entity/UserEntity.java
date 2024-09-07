@@ -12,7 +12,7 @@ public class UserEntity {
     private Long id; // real userId
 
     @Column(nullable = false)
-    private String userId; // public userId
+    private String userId; // public user id (alias pt id real)
 
     @Column(nullable = false, length = 50)
     private String firstName;

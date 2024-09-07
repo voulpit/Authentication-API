@@ -45,9 +45,6 @@ public class UserServiceImpl implements UserService {
         return storedUser;
     }
 
-    /**
-     * http://localhost:8080/login endpoint is provided automatically by Spring framework
-     */
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(username);
@@ -55,5 +52,16 @@ public class UserServiceImpl implements UserService {
             throw new UsernameNotFoundException(username);
         }
         return new User(username, userEntity.getEncryptedPassword(), new ArrayList<>());
+    }
+
+    @Override
+    public UserDto getUser(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            throw new UsernameNotFoundException(email);
+        }
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
     }
 }

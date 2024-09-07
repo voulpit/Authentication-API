@@ -9,6 +9,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -18,7 +19,6 @@ public class WebSecurity {
     private final UserService userService;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
 
-    //@Autowired
     public WebSecurity(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder) {
         this.userService = userService;
         this.bCryptPasswordEncoder = bCryptPasswordEncoder;
@@ -32,13 +32,19 @@ public class WebSecurity {
                 .passwordEncoder(bCryptPasswordEncoder);
         AuthenticationManager authenticationManager = authenticationManagerBuilder.build();
 
+        // customize login URL (default is /login)
+        AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager);
+        authenticationFilter.setFilterProcessesUrl("/get-me-in");
+
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_PATH).permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
-                .addFilter(new AuthenticationFilter(authenticationManager));
+                .addFilter(authenticationFilter)
+                .addFilter(new AuthorizationFilter(authenticationManager))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
 
         return httpSecurity.build();
     }

@@ -1,7 +1,10 @@
 package com.hanul.pis.authentication.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hanul.pis.authentication.SpringAppContext;
 import com.hanul.pis.authentication.model.dto.LoginRequestDto;
+import com.hanul.pis.authentication.model.dto.shared.UserDto;
+import com.hanul.pis.authentication.service.UserService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -41,22 +44,28 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
 
     /*
     Generates a token upon login, based on defined constants
+    Also sends back the "official" userId
+    Both info are included in the headers
     */
     @Override
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain,
                                             Authentication authResult) {
-        byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.TOKEN_SECRET.getBytes());
+        byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes());
         SecretKey secretKey = Keys.hmacShaKeyFor(secretKeyBytes);
 
         Instant now = Instant.now();
         String username = ((User) authResult.getPrincipal()).getUsername();
 
         String token = Jwts.builder()
-                .subject(username)
+                .subject(username)          // <-------- subject is the username (email address)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from((now.plusMillis(SecurityConstants.EXPIRATION_TIME))))
                 .signWith(secretKey)
                 .compact();
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
+
+        UserService userService = (UserService) SpringAppContext.getBean("userServiceImpl");
+        UserDto userDto = userService.getUser(username);
+        response.addHeader("UserId", userDto.getUserId());
     }
 }

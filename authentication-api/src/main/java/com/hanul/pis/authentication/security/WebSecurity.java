@@ -40,6 +40,7 @@ public class WebSecurity {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_PATH).permitAll()
+                        .requestMatchers("/error").permitAll() // shows 500 when it's 500, instead of 403
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
                 .addFilter(authenticationFilter)

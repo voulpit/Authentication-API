@@ -3,6 +3,7 @@ package com.hanul.pis.authentication.service.impl;
 import com.hanul.pis.authentication.infra.entity.UserEntity;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
+import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
@@ -28,7 +29,9 @@ public class UserServiceImpl implements UserService {
     private BCryptPasswordEncoder bCryptPasswordEncoder;
 
     @Override
-    public UserDto createUser(UserDto userDto) {
+    public UserDto createUser(UserDto userDto) throws UserValidationException {
+        validateInput(userDto);
+
         UserEntity user = userRepository.findByEmail(userDto.getEmail());
         if (user != null) {
             throw new UserValidationException("Email already exists!");
@@ -74,5 +77,14 @@ public class UserServiceImpl implements UserService {
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userEntity, userDto);
         return userDto;
+    }
+
+    private void validateInput(UserDto userDto) {
+        if (userDto.getFirstName() == null || userDto.getFirstName().isEmpty() ||
+            userDto.getLastName() == null || userDto.getLastName().isEmpty() ||
+            userDto.getEmail() == null || userDto.getEmail().isEmpty() ||
+            userDto.getPassword() == null || userDto.getPassword().isEmpty()) {
+            throw new UserValidationException(ErrorMessages.MISSING_REQUIRED_FIELD.getMessage());
+        }
     }
 }

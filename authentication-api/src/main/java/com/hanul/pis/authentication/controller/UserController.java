@@ -1,7 +1,7 @@
 package com.hanul.pis.authentication.controller;
 
 import com.hanul.pis.authentication.model.dto.SignUpRequestDto;
-import com.hanul.pis.authentication.model.dto.SignUpResponseDto;
+import com.hanul.pis.authentication.model.dto.UserDetailsDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.service.UserService;
 import org.springframework.beans.BeanUtils;
@@ -14,17 +14,22 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    @GetMapping
-    public String getUser() {
-        return "Got";
+    @GetMapping(path = "/{userId}")
+    public UserDetailsDto getUserDetails(@PathVariable String userId) {
+        UserDetailsDto result = new UserDetailsDto();
+
+        UserDto userDto = userService.getUserByUserId(userId);
+        BeanUtils.copyProperties(userDto, result);
+
+        return result;
     }
 
     @PostMapping
-    public SignUpResponseDto createUser(@RequestBody SignUpRequestDto userDetails) {
+    public UserDetailsDto createUser(@RequestBody SignUpRequestDto userDetails) {
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userDetails, userDto);
 
-        SignUpResponseDto responseDto = new SignUpResponseDto();
+        UserDetailsDto responseDto = new UserDetailsDto();
         UserDto createdUser = userService.createUser(userDto);
         BeanUtils.copyProperties(createdUser, responseDto);
 

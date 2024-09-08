@@ -34,6 +34,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
         try {
             LoginRequestDto loginInfo = new ObjectMapper().readValue(request.getInputStream(), LoginRequestDto.class);
+            // the next line does the authentication
             return getAuthenticationManager().authenticate(
                     new UsernamePasswordAuthenticationToken(loginInfo.getEmail(), loginInfo.getPassword(), new ArrayList<>()));
             // first it calls UserServiceImpl::loadUserByUsername and checks the UserDetails info against those provided above
@@ -65,7 +66,7 @@ public class AuthenticationFilter extends UsernamePasswordAuthenticationFilter {
         response.addHeader(SecurityConstants.HEADER_STRING, SecurityConstants.TOKEN_PREFIX + token);
 
         UserService userService = (UserService) SpringAppContext.getBean("userServiceImpl");
-        UserDto userDto = userService.getUser(username);
+        UserDto userDto = userService.getUserByEmail(username);
         response.addHeader("UserId", userDto.getUserId());
     }
 }

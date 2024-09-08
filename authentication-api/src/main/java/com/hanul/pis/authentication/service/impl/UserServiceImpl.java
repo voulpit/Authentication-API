@@ -1,9 +1,9 @@
 package com.hanul.pis.authentication.service.impl;
 
+import com.hanul.pis.authentication.infra.entity.UserEntity;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
-import com.hanul.pis.authentication.infra.entity.UserEntity;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
 import org.springframework.beans.BeanUtils;
@@ -55,10 +55,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserDto getUser(String email) {
+    public UserDto getUserByEmail(String email) {
         UserEntity userEntity = userRepository.findByEmail(email);
         if (userEntity == null) {
             throw new UsernameNotFoundException(email);
+        }
+        UserDto userDto = new UserDto();
+        BeanUtils.copyProperties(userEntity, userDto);
+        return userDto;
+    }
+
+    @Override
+    public UserDto getUserByUserId(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        if (userEntity == null) {
+            throw new UsernameNotFoundException(userId);
         }
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userEntity, userDto);

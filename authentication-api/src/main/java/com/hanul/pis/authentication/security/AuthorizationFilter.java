@@ -37,6 +37,10 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
         chain.doFilter(request, response);
     }
 
+    /**
+     * Verifies the token
+     * 403 Unauthorized if the token is invalid
+     */
     private UsernamePasswordAuthenticationToken getAuthentication(HttpServletRequest request) {
         String authorizationHeader = request.getHeader(SecurityConstants.HEADER_STRING);
         if (authorizationHeader == null) {

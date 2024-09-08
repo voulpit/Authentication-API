@@ -1,6 +1,6 @@
 package com.hanul.pis.authentication.model.dto;
 
-public class SignUpResponseDto {
+public class UserDetailsDto {
     private String userId; // public user ID, different from the user's ID in the DB
     private String firstName;
     private String lastName;

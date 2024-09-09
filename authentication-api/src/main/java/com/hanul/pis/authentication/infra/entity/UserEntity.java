@@ -29,7 +29,10 @@ public class UserEntity {
     private String emailVerificationToken;
 
     @Column(nullable = false)
-    private Boolean emailVerificationStatus = false;
+    private Boolean activeInd = false; // ~ emailVerificationStatus
+
+    @Column(nullable = false)
+    private Boolean deletedInd = false;
 
     public Long getId() {
         return id;
@@ -87,11 +90,19 @@ public class UserEntity {
         this.emailVerificationToken = emailVerificationToken;
     }
 
-    public Boolean getEmailVerificationStatus() {
-        return emailVerificationStatus;
+    public Boolean getActiveInd() {
+        return activeInd;
     }
 
-    public void setEmailVerificationStatus(Boolean emailVerificationStatus) {
-        this.emailVerificationStatus = emailVerificationStatus;
+    public void setActiveInd(Boolean activeInd) {
+        this.activeInd = activeInd;
+    }
+
+    public Boolean getDeletedInd() {
+        return deletedInd;
+    }
+
+    public void setDeletedInd(Boolean deletedInd) {
+        this.deletedInd = deletedInd;
     }
 }

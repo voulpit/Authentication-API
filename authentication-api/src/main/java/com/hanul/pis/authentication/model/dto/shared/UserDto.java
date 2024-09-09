@@ -9,7 +9,7 @@ public class UserDto {
     private String password;
     private String encryptedPassword;
     private String emailVerificationToken;
-    private boolean emailVerificationStatus = false;
+    private Boolean emailVerificationStatus = false;
 
     public Long getId() {
         return id;
@@ -75,7 +75,7 @@ public class UserDto {
         this.emailVerificationToken = emailVerificationToken;
     }
 
-    public boolean isEmailVerificationStatus() {
+    public Boolean getEmailVerificationStatus() {
         return emailVerificationStatus;
     }
 

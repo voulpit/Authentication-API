@@ -1,6 +1,6 @@
 package com.hanul.pis.authentication.model.dto;
 
-public class SignUpRequestDto {
+public class UserDetailsRequestDto {
     private String firstName;
     private String lastName;
     private String email;

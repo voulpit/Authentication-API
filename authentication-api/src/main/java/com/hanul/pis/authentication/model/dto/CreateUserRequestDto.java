@@ -1,9 +1,26 @@
 package com.hanul.pis.authentication.model.dto;
 
-public class UserDetailsRequestDto {
+import com.hanul.pis.authentication.utils.ErrorMessages;
+import com.hanul.pis.authentication.validation.EmailValidation;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+
+public class CreateUserRequestDto {
+    @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
+    @NotBlank(message = ErrorMessages.MISSING_REQUIRED_FIELD)
     private String firstName;
+
+    @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
+    @NotBlank(message = ErrorMessages.MISSING_REQUIRED_FIELD)
     private String lastName;
+
+    @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
+    @NotBlank(message = ErrorMessages.MISSING_REQUIRED_FIELD)
+    @EmailValidation
     private String email;
+
+    @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
+    @NotBlank(message = ErrorMessages.MISSING_REQUIRED_FIELD)
     private String password;
 
     public String getFirstName() {

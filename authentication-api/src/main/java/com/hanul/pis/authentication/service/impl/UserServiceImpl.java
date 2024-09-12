@@ -4,11 +4,14 @@ import com.hanul.pis.authentication.infra.entity.UserEntity;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
+import com.hanul.pis.authentication.service.CachingService;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.User;
@@ -30,14 +33,32 @@ public class UserServiceImpl implements UserService {
     private RegistrationUtils registrationUtils;
     @Autowired
     private BCryptPasswordEncoder bCryptPasswordEncoder;
+    @Autowired
+    private Environment environment;
+    @Autowired
+    private CachingService cachingService;
+    private boolean useCaching = false;
+
+    @PostConstruct
+    public void initialize() {
+        String usernameCaching = environment.getProperty("enable.caching");
+        if ("true".equals(usernameCaching)) {
+            this.useCaching = true;
+            cachingService.initialize(userRepository.getAllEmails());
+        }
+    }
 
     @Override
     public UserDto createUser(UserDto userDto) throws UserValidationException {
-        validateInputForUserCreation(userDto);
-
-        UserEntity user = userRepository.findByEmail(userDto.getEmail());
-        if (user != null) {
-            throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS.getMessage());
+        if (useCaching) {
+            if (cachingService.findUsername(userDto.getEmail())) {
+                throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+            }
+        } else {
+            UserEntity user = userRepository.findByEmail(userDto.getEmail());
+            if (user != null) {
+                throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+            }
         }
 
         UserEntity userEntity = new UserEntity();
@@ -46,6 +67,10 @@ public class UserServiceImpl implements UserService {
         userEntity.setUserId(registrationUtils.generateUserId(USER_ID_LENGTH));
         userEntity = userRepository.save(userEntity);
 
+        if (useCaching) {
+            cachingService.addUsername(userDto.getEmail());
+        }
+
         UserDto storedUser = new UserDto();
         BeanUtils.copyProperties(userEntity, storedUser);
         return storedUser;
@@ -53,8 +78,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto updateUser(String userId, UserDto userDto) {
-        validateInputForUserUpdate(userDto);
-
         UserEntity userEntity = userRepository.findByUserId(userId);
         checkUserExists(userEntity, userId);
 
@@ -123,22 +146,7 @@ public class UserServiceImpl implements UserService {
 
     private void checkUserExists(UserEntity userEntity, String searchedBy) {
         if (userEntity == null || userEntity.getDeletedInd()) {
-            throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND.getMessage() + searchedBy);
-        }
-    }
-
-    private void validateInputForUserCreation(UserDto userDto) {
-        if (userDto.getFirstName() == null || userDto.getFirstName().isEmpty() ||
-            userDto.getLastName() == null || userDto.getLastName().isEmpty() ||
-            userDto.getEmail() == null || userDto.getEmail().isEmpty() ||
-            userDto.getPassword() == null || userDto.getPassword().isEmpty()) {
-            throw new UserValidationException(ErrorMessages.MISSING_REQUIRED_FIELD.getMessage());
-        }
-    }
-
-    private void validateInputForUserUpdate(UserDto userDto) {
-        if (userDto.getFirstName() == null || userDto.getFirstName().isEmpty() || userDto.getLastName() == null || userDto.getLastName().isEmpty()) {
-            throw new UserValidationException(ErrorMessages.MISSING_REQUIRED_FIELD.getMessage());
+            throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND + searchedBy);
         }
     }
 }

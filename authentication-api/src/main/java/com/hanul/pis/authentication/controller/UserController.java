@@ -1,11 +1,13 @@
 package com.hanul.pis.authentication.controller;
 
+import com.hanul.pis.authentication.model.dto.CreateUserRequestDto;
 import com.hanul.pis.authentication.model.dto.OperationStatusDto;
+import com.hanul.pis.authentication.model.dto.UpdateUserInfoRequestDto;
 import com.hanul.pis.authentication.model.dto.UserDetailsDto;
-import com.hanul.pis.authentication.model.dto.UserDetailsRequestDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.Constants;
+import jakarta.validation.Valid;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -33,7 +35,7 @@ public class UserController {
 
     @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
                  produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public UserDetailsDto createUser(@RequestBody UserDetailsRequestDto userDetails) {
+    public UserDetailsDto createUser(@Valid @RequestBody CreateUserRequestDto userDetails) {
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userDetails, userDto);
 
@@ -47,7 +49,7 @@ public class UserController {
     @PutMapping(path="/{userId}",
             consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
-    public UserDetailsDto updateUser(@PathVariable String userId, @RequestBody UserDetailsRequestDto userDetails) {
+    public UserDetailsDto updateUser(@PathVariable String userId, @Valid @RequestBody UpdateUserInfoRequestDto userDetails) {
         UserDto userDto = new UserDto();
         BeanUtils.copyProperties(userDetails, userDto);
 

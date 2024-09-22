@@ -1,7 +1,10 @@
 package com.hanul.pis.authentication.service.impl;
 
+import com.hanul.pis.authentication.infra.entity.AddressEntity;
 import com.hanul.pis.authentication.infra.entity.UserEntity;
+import com.hanul.pis.authentication.infra.repo.AddressRepository;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
+import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
 import com.hanul.pis.authentication.service.CachingService;
@@ -9,6 +12,7 @@ import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
 import jakarta.annotation.PostConstruct;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
@@ -23,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.hanul.pis.authentication.utils.Constants.ADDRESS_ID_LENGTH;
 import static com.hanul.pis.authentication.utils.Constants.USER_ID_LENGTH;
 
 @Service
@@ -38,6 +43,8 @@ public class UserServiceImpl implements UserService {
     @Autowired
     private CachingService cachingService;
     private boolean useCaching = false;
+    @Autowired
+    private AddressRepository addressRepository;
 
     @PostConstruct
     public void initialize() {
@@ -61,8 +68,16 @@ public class UserServiceImpl implements UserService {
             }
         }
 
-        UserEntity userEntity = new UserEntity();
-        BeanUtils.copyProperties(userDto, userEntity);
+        ModelMapper modelMapper = new ModelMapper();
+        UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
+
+        if (userEntity.getAddresses() != null) {
+            for (AddressEntity addressDto : userEntity.getAddresses()) {
+                addressDto.setPublicId(registrationUtils.generateAddressId(ADDRESS_ID_LENGTH));
+                addressDto.setUserEntity(userEntity);
+            }
+        }
+
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
         userEntity.setUserId(registrationUtils.generateUserId(USER_ID_LENGTH));
         userEntity = userRepository.save(userEntity);
@@ -70,10 +85,7 @@ public class UserServiceImpl implements UserService {
         if (useCaching) {
             cachingService.addUsername(userDto.getEmail());
         }
-
-        UserDto storedUser = new UserDto();
-        BeanUtils.copyProperties(userEntity, storedUser);
-        return storedUser;
+        return modelMapper.map(userEntity, UserDto.class);
     }
 
     @Override
@@ -125,6 +137,37 @@ public class UserServiceImpl implements UserService {
         userEntity.setDeletedInd(true);
         userEntity = userRepository.save(userEntity);
         return userEntity.getDeletedInd();
+    }
+
+    @Override
+    public List<AddressDto> getUserAddresses(String userId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        checkUserExists(userEntity, userId);
+
+        List<AddressDto> result = new ArrayList<>();
+        if (userEntity.getAddresses() != null) {
+            for (AddressEntity addressEntity : userEntity.getAddresses()) { // sau: addressRepository.findAllByUserEntity(userEntity);
+                AddressDto addressDto = new AddressDto();
+                BeanUtils.copyProperties(addressEntity, addressDto);
+                result.add(addressDto);
+            }
+        }
+        return result;
+    }
+
+    @Override
+    public AddressDto getUserAddress(String userId, String addressId) {
+        UserEntity userEntity = userRepository.findByUserId(userId);
+        checkUserExists(userEntity, userId);
+
+        AddressDto result = new AddressDto();
+        AddressEntity address = addressRepository.findByPublicId(addressId);
+        if (address == null || !userEntity.equals(address.getUserEntity())) {
+            throw new UserValidationException("Invalid address provided!");
+        }
+        BeanUtils.copyProperties(address, result);
+
+        return result;
     }
 
     @Override

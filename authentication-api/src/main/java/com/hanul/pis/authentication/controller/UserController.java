@@ -4,10 +4,12 @@ import com.hanul.pis.authentication.model.dto.CreateUserRequestDto;
 import com.hanul.pis.authentication.model.dto.OperationStatusDto;
 import com.hanul.pis.authentication.model.dto.UpdateUserInfoRequestDto;
 import com.hanul.pis.authentication.model.dto.UserDetailsDto;
+import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.Constants;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -33,17 +35,26 @@ public class UserController {
         return result;
     }
 
+    @GetMapping(path = "/{userId}/address",
+                produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<AddressDto> getAddresses(@PathVariable String userId) {
+        return userService.getUserAddresses(userId);
+    }
+
+    @GetMapping(path = "/{userId}/address/{addressId}",
+                produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public AddressDto getAddress(@PathVariable String userId, @PathVariable String addressId) {
+        return userService.getUserAddress(userId, addressId);
+    }
+
     @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
                  produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public UserDetailsDto createUser(@Valid @RequestBody CreateUserRequestDto userDetails) {
-        UserDto userDto = new UserDto();
-        BeanUtils.copyProperties(userDetails, userDto);
+        ModelMapper modelMapper = new ModelMapper();
+        UserDto userDto = modelMapper.map(userDetails, UserDto.class);
 
-        UserDetailsDto responseDto = new UserDetailsDto();
         UserDto createdUser = userService.createUser(userDto);
-        BeanUtils.copyProperties(createdUser, responseDto);
-
-        return responseDto;
+        return modelMapper.map(createdUser, UserDetailsDto.class);
     }
 
     @PutMapping(path="/{userId}",

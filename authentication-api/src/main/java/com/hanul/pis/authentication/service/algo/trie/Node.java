@@ -1,4 +1,4 @@
-package com.hanul.pis.authentication.algo.trie;
+package com.hanul.pis.authentication.service.algo.trie;
 
 import com.hanul.pis.authentication.model.exception.UserValidationException;
 import com.hanul.pis.authentication.utils.ErrorMessages;
@@ -27,12 +27,14 @@ public class Node {
      * 39 allowed characters:
      * - = 45
      * . = 46
+     * / = 47, to replace @
      * 0-9 = 48-57
      * _ = 95
      * a-z = 97-122
-     * Total children/node will be 39 + 2 unused (47, 96) = 41
+     * Total children/node will be 39 + 1 unused (96) = 42
      */
-    private static final int TOTAL_CHILDREN = 41;
+    public static final char SLASH_ASCII = 47; // unused, will replace @
+    private static final int TOTAL_CHILDREN = 42;
     private int getOrder(char ch) {
         int order = ch <= 57 ? ch-45 : ch-83; // 95-12
         if (order < 0 || order >= TOTAL_CHILDREN) {

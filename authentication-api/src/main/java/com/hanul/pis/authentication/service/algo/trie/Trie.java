@@ -1,4 +1,4 @@
-package com.hanul.pis.authentication.algo.trie;
+package com.hanul.pis.authentication.service.algo.trie;
 
 public class Trie {
     Node root;

@@ -1,9 +1,12 @@
 package com.hanul.pis.authentication.model.dto;
 
+import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.validation.EmailValidation;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import java.util.List;
 
 public class CreateUserRequestDto {
     @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
@@ -22,6 +25,8 @@ public class CreateUserRequestDto {
     @NotNull(message = ErrorMessages.MISSING_REQUIRED_FIELD)
     @NotBlank(message = ErrorMessages.MISSING_REQUIRED_FIELD)
     private String password;
+
+    private List<AddressDto> addresses;
 
     public String getFirstName() {
         return firstName;
@@ -53,5 +58,13 @@ public class CreateUserRequestDto {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<AddressDto> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressDto> addresses) {
+        this.addresses = addresses;
     }
 }

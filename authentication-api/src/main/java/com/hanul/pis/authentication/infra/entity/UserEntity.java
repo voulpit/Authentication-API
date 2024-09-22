@@ -1,9 +1,8 @@
 package com.hanul.pis.authentication.infra.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
+
+import java.util.List;
 
 @Entity(name = "users")
 public class UserEntity {
@@ -33,6 +32,9 @@ public class UserEntity {
 
     @Column(nullable = false)
     private Boolean deletedInd = false;
+
+    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL) // propagate persist operation to them too
+    private List<AddressEntity> addresses;
 
     public Long getId() {
         return id;
@@ -104,5 +106,13 @@ public class UserEntity {
 
     public void setDeletedInd(Boolean deletedInd) {
         this.deletedInd = deletedInd;
+    }
+
+    public List<AddressEntity> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressEntity> addresses) {
+        this.addresses = addresses;
     }
 }

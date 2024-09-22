@@ -1,5 +1,6 @@
 package com.hanul.pis.authentication.service;
 
+import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
@@ -11,5 +12,7 @@ public interface UserService extends UserDetailsService {
     boolean deleteUser(String userId);
     UserDto getUserByEmail(String email);
     UserDto getUserByUserId(String userId);
+    List<AddressDto> getUserAddresses(String userId);
+    AddressDto getUserAddress(String userId, String addressId);
     List<UserDto> getUsers(int page, int limit);
 }

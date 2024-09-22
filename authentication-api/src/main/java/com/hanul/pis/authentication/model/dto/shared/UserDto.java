@@ -1,5 +1,9 @@
 package com.hanul.pis.authentication.model.dto.shared;
 
+import com.hanul.pis.authentication.infra.entity.AddressEntity;
+
+import java.util.List;
+
 public class UserDto {
     private Long id;
     private String userId;
@@ -10,6 +14,7 @@ public class UserDto {
     private String encryptedPassword;
     private String emailVerificationToken;
     private Boolean emailVerificationStatus = false;
+    private List<AddressEntity> addresses;
 
     public Long getId() {
         return id;
@@ -81,5 +86,13 @@ public class UserDto {
 
     public void setEmailVerificationStatus(boolean emailVerificationStatus) {
         this.emailVerificationStatus = emailVerificationStatus;
+    }
+
+    public List<AddressEntity> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<AddressEntity> addresses) {
+        this.addresses = addresses;
     }
 }

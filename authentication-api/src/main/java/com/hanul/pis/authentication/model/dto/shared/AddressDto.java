@@ -1,6 +1,8 @@
 package com.hanul.pis.authentication.model.dto.shared;
 
-public class AddressDto {
+import org.springframework.hateoas.RepresentationModel;
+
+public class AddressDto extends RepresentationModel<AddressDto> {
     private String city;
     private String country;
     private String street;

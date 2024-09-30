@@ -138,4 +138,16 @@ public class UserController {
 
         return result;
     }
+
+    /* After user clicks the verification link in his email ~ /users/email-verification?token=skjdkjdfkld */
+    @GetMapping(path = "email-verification", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusDto verifyEmailToken(@RequestParam(value="token") String token) {
+        OperationStatusDto result = new OperationStatusDto();
+        result.setOperationName(Constants.Operation.VERIFY_EMAIL);
+
+        boolean isVerified = userService.verifyEmailToken(token);
+        result.setSuccessful(isVerified);
+
+        return result;
+    }
 }

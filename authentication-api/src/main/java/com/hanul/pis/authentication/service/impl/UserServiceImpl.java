@@ -9,6 +9,7 @@ import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
 import com.hanul.pis.authentication.service.CachingService;
 import com.hanul.pis.authentication.service.UserService;
+import com.hanul.pis.authentication.utils.AmazonSES;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
 import jakarta.annotation.PostConstruct;
@@ -80,12 +81,16 @@ public class UserServiceImpl implements UserService {
 
         userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
         userEntity.setUserId(registrationUtils.generateUserId(USER_ID_LENGTH));
+        userEntity.setEmailVerificationToken(registrationUtils.generateEmailVerificationToken(userEntity.getUserId()));
         userEntity = userRepository.save(userEntity);
+
+        UserDto response = modelMapper.map(userEntity, UserDto.class);
+        new AmazonSES().verifyEmail(environment.getProperty("url"), response);
 
         if (useCaching) {
             cachingService.addUsername(userDto.getEmail());
         }
-        return modelMapper.map(userEntity, UserDto.class);
+        return response;
     }
 
     @Override
@@ -106,7 +111,7 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(username);
         checkUserExists(userEntity, username);
-        return new User(username, userEntity.getEncryptedPassword(), new ArrayList<>());
+        return new User(username, userEntity.getEncryptedPassword(), userEntity.getActiveInd(), true, true, true,  new ArrayList<>());
     }
 
     @Override
@@ -185,6 +190,19 @@ public class UserServiceImpl implements UserService {
             result.add(userDto);
         }
         return result;
+    }
+
+    @Override
+    public boolean verifyEmailToken(String token) {
+        UserEntity userEntity = userRepository.findByEmailVerificationToken(token);
+        if (userEntity == null || RegistrationUtils.hasTokenExpired(token)) {
+            return false;
+        }
+        userEntity.setEmailVerificationToken(null);
+        userEntity.setEmailVerificationStatus(true);
+        userEntity.setActiveInd(true);
+        userRepository.save(userEntity);
+        return true;
     }
 
     private void checkUserExists(UserEntity userEntity, String searchedBy) {

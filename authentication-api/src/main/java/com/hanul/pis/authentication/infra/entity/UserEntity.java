@@ -25,10 +25,12 @@ public class UserEntity {
     @Column(nullable = false)
     private String encryptedPassword;
 
+    private Boolean emailVerificationStatus = false;
+
     private String emailVerificationToken;
 
     @Column(nullable = false)
-    private Boolean activeInd = false; // ~ emailVerificationStatus
+    private Boolean activeInd = false;
 
     @Column(nullable = false)
     private Boolean deletedInd = false;
@@ -82,6 +84,14 @@ public class UserEntity {
 
     public void setEncryptedPassword(String encryptedPassword) {
         this.encryptedPassword = encryptedPassword;
+    }
+
+    public Boolean getEmailVerificationStatus() {
+        return emailVerificationStatus;
+    }
+
+    public void setEmailVerificationStatus(Boolean emailVerificationStatus) {
+        this.emailVerificationStatus = emailVerificationStatus;
     }
 
     public String getEmailVerificationToken() {

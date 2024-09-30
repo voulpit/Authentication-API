@@ -1,8 +1,15 @@
 package com.hanul.pis.authentication.utils;
 
+import com.hanul.pis.authentication.security.SecurityConstants;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
 
+import javax.crypto.SecretKey;
 import java.security.SecureRandom;
+import java.util.Base64;
+import java.util.Date;
 import java.util.Random;
 
 @Component
@@ -24,5 +31,25 @@ public class RegistrationUtils {
             stringBuilder.append(ALPHABET.charAt(RANDOM.nextInt(ALPHABET.length())));
         }
         return new String(stringBuilder);
+    }
+
+    public String generateEmailVerificationToken(String userId) {
+        return Jwts.builder()
+                .subject(userId)
+                .expiration(new Date(System.currentTimeMillis() + SecurityConstants.EXPIRATION_TIME))
+                .signWith(RegistrationUtils.getSecretKey())
+                .compact();
+    }
+
+    public static boolean hasTokenExpired(String token) {
+        Claims claims = Jwts.parser().verifyWith(getSecretKey()).build()
+                .parseSignedClaims(token)
+                .getPayload();
+        return claims.getExpiration().before(new Date());
+    }
+
+    private static SecretKey getSecretKey() {
+        byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes());
+        return Keys.hmacShaKeyFor(secretKeyBytes);
     }
 }

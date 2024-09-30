@@ -11,6 +11,7 @@ import java.util.List;
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
     UserEntity findByEmail(String email);
     UserEntity findByUserId(String userId);
+    UserEntity findByEmailVerificationToken(String token);
 
     @Query("SELECT u.email FROM users u")
     List<String> getAllEmails();

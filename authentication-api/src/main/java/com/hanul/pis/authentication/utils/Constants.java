@@ -5,7 +5,9 @@ public class Constants {
     public static final int ADDRESS_ID_LENGTH = 20;
     public enum Operation {
         DELETE,
-        VERIFY_EMAIL
+        VERIFY_EMAIL,
+        REQUEST_PASSWORD_RESET,
+        PASSWORD_RESET
     };
 
     private Constants() {

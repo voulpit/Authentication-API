@@ -48,6 +48,14 @@ public class RegistrationUtils {
         return claims.getExpiration().before(new Date());
     }
 
+    public String generatePasswordResetToken(String userId) {
+        return Jwts.builder()
+                .subject(userId)
+                .expiration(new Date(System.currentTimeMillis() + SecurityConstants.PASSWORD_RESET_EXP_TIME))
+                .signWith(RegistrationUtils.getSecretKey())
+                .compact();
+    }
+
     private static SecretKey getSecretKey() {
         byte[] secretKeyBytes = Base64.getEncoder().encode(SecurityConstants.getTokenSecret().getBytes());
         return Keys.hmacShaKeyFor(secretKeyBytes);

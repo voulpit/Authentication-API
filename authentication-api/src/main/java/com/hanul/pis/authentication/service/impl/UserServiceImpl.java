@@ -9,9 +9,10 @@ import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
 import com.hanul.pis.authentication.service.CachingService;
 import com.hanul.pis.authentication.service.UserService;
-import com.hanul.pis.authentication.utils.AmazonSES;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
+import com.hanul.pis.authentication.utils.aws.ses.EmailVerification;
+import com.hanul.pis.authentication.utils.aws.ses.PasswordReset;
 import jakarta.annotation.PostConstruct;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -85,7 +86,7 @@ public class UserServiceImpl implements UserService {
         userEntity = userRepository.save(userEntity);
 
         UserDto response = modelMapper.map(userEntity, UserDto.class);
-        new AmazonSES().verifyEmail(environment.getProperty("url"), response);
+        new EmailVerification().verifyEmail(environment.getProperty("url"), response);
 
         if (useCaching) {
             cachingService.addUsername(userDto.getEmail());
@@ -201,6 +202,36 @@ public class UserServiceImpl implements UserService {
         userEntity.setEmailVerificationToken(null);
         userEntity.setEmailVerificationStatus(true);
         userEntity.setActiveInd(true);
+        userRepository.save(userEntity);
+        return true;
+    }
+
+    @Override
+    public boolean requestToResetPassword(String email) {
+        UserEntity userEntity = userRepository.findByEmail(email);
+        if (userEntity == null) {
+            return false;
+        }
+
+        String token = registrationUtils.generatePasswordResetToken(userEntity.getUserId());
+        userEntity.setPasswordResetToken(token);
+        userRepository.save(userEntity);
+
+        return new PasswordReset().resetPassword(environment.getProperty("url"), userEntity.getFirstName(),
+                userEntity.getEmail(), userEntity.getPasswordResetToken());
+    }
+
+    @Override
+    public boolean resetPassword(String password, String token) {
+        if (RegistrationUtils.hasTokenExpired(token)) {
+            return false;
+        }
+        UserEntity userEntity = userRepository.findByPasswordResetToken(token);
+        if (userEntity == null) {
+            return false;
+        }
+        userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(password));
+        userEntity.setPasswordResetToken(null);
         userRepository.save(userEntity);
         return true;
     }

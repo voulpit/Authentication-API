@@ -41,6 +41,8 @@ public class WebSecurity {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, SecurityConstants.SIGN_UP_PATH).permitAll()
                         .requestMatchers(HttpMethod.GET, SecurityConstants.VERIFICATION_EMAIL_URL).permitAll()
+                        .requestMatchers(HttpMethod.GET, SecurityConstants.PASSWORD_RESET_REQUEST_URL).permitAll()
+                        .requestMatchers(HttpMethod.POST, SecurityConstants.PASSWORD_RESET_URL).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS).permitAll() // Chrome first sends an Options request....must be successful
                         .requestMatchers("/error").permitAll() // shows 500 when it's 500, instead of 403
                         .anyRequest().authenticated())

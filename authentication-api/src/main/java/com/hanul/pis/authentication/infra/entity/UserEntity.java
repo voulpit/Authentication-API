@@ -29,6 +29,8 @@ public class UserEntity {
 
     private String emailVerificationToken;
 
+    private String passwordResetToken;
+
     @Column(nullable = false)
     private Boolean activeInd = false;
 
@@ -100,6 +102,14 @@ public class UserEntity {
 
     public void setEmailVerificationToken(String emailVerificationToken) {
         this.emailVerificationToken = emailVerificationToken;
+    }
+
+    public String getPasswordResetToken() {
+        return passwordResetToken;
+    }
+
+    public void setPasswordResetToken(String passwordResetToken) {
+        this.passwordResetToken = passwordResetToken;
     }
 
     public Boolean getActiveInd() {

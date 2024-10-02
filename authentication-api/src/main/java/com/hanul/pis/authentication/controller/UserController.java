@@ -1,9 +1,6 @@
 package com.hanul.pis.authentication.controller;
 
-import com.hanul.pis.authentication.model.dto.CreateUserRequestDto;
-import com.hanul.pis.authentication.model.dto.OperationStatusDto;
-import com.hanul.pis.authentication.model.dto.UpdateUserInfoRequestDto;
-import com.hanul.pis.authentication.model.dto.UserDetailsDto;
+import com.hanul.pis.authentication.model.dto.*;
 import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.service.UserService;
@@ -147,6 +144,28 @@ public class UserController {
 
         boolean isVerified = userService.verifyEmailToken(token);
         result.setSuccessful(isVerified);
+
+        return result;
+    }
+
+    @GetMapping(path = "password-reset-request", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusDto requestResetPassword(@RequestParam(value="email") String email) {
+        OperationStatusDto result = new OperationStatusDto();
+        result.setOperationName(Constants.Operation.REQUEST_PASSWORD_RESET);
+
+        boolean done = userService.requestToResetPassword(email);
+        result.setSuccessful(done);
+
+        return result;
+    }
+
+    @PostMapping(path = "password-reset", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public OperationStatusDto resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
+        OperationStatusDto result = new OperationStatusDto();
+        result.setOperationName(Constants.Operation.PASSWORD_RESET);
+
+        boolean done = userService.resetPassword(passwordResetDto.getPassword(), passwordResetDto.getToken());
+        result.setSuccessful(done);
 
         return result;
     }

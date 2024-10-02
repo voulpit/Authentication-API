@@ -1,13 +1,8 @@
-package com.hanul.pis.authentication.utils;
+package com.hanul.pis.authentication.utils.aws.ses;
 
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
-import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
-import com.amazonaws.services.simpleemail.model.*;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 
-public class AmazonSES {
-    private static final String FROM = "georgiana.tache@hotmail.com";
+public class EmailVerification extends AmazonSES {
     private static final String SUBJECT = "Inregistrare HANUL PISICILOR";
 
     private static final String FULL_PATH = "$url/register/$token";
@@ -20,19 +15,10 @@ public class AmazonSES {
             "Pentru a confirma inregistrarea cu adresa de email, va rugam sa apasati pe link-ul alaturat: $fullPath.";
 
     public void verifyEmail(String url, UserDto userDto) {
-        AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build();
         String fullPath = FULL_PATH.replace("$url", url).replace("$token", userDto.getEmailVerificationToken());
         String htmlBody = HTML_BODY.replace("$fullPath", fullPath);
         String textBody = TEXT_BODY.replace("$fullPath", fullPath);
-
-        SendEmailRequest request = new SendEmailRequest()
-                .withDestination(new Destination().withToAddresses(userDto.getEmail()))
-                .withMessage(new Message().withBody(new Body()
-                                .withHtml(new Content().withData(htmlBody))
-                                .withText(new Content().withData(textBody)))
-                        .withSubject(new Content().withData(SUBJECT)))
-                .withSource(FROM);
-        client.sendEmail(request);
+        sendEmail(userDto.getEmail(), SUBJECT, htmlBody, textBody);
     }
 
     /*

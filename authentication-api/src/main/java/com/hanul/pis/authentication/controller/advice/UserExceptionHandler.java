@@ -11,9 +11,7 @@ import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.util.Date;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class UserExceptionHandler {
@@ -33,7 +31,6 @@ public class UserExceptionHandler {
         ErrorMessageDto errorMessageDto = new ErrorMessageDto(errorMessages.orElse("Unknown error"), new Date(), HttpStatus.BAD_REQUEST.value());
         return new ResponseEntity<>(errorMessageDto, new HttpHeaders(), HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(value = {Exception.class})
     public ResponseEntity<Object> handleOtherExceptions(Exception exception) {

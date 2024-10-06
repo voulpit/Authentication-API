@@ -2,7 +2,7 @@ package com.hanul.pis.authentication.utils.aws.ses;
 
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 
-public class EmailVerification extends AmazonSES {
+public class EmailVerification implements AmazonSES {
     private static final String SUBJECT = "Inregistrare HANUL PISICILOR";
 
     private static final String FULL_PATH = "$url/register/$token";

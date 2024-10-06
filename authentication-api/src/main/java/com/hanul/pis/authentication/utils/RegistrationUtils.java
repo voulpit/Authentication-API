@@ -2,6 +2,7 @@ package com.hanul.pis.authentication.utils;
 
 import com.hanul.pis.authentication.security.SecurityConstants;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.stereotype.Component;
@@ -42,10 +43,14 @@ public class RegistrationUtils {
     }
 
     public static boolean hasTokenExpired(String token) {
-        Claims claims = Jwts.parser().verifyWith(getSecretKey()).build()
-                .parseSignedClaims(token)
-                .getPayload();
-        return claims.getExpiration().before(new Date());
+        try {
+            Claims claims = Jwts.parser().verifyWith(getSecretKey()).build()
+                    .parseSignedClaims(token)
+                    .getPayload();
+            return claims.getExpiration().before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
     }
 
     public String generatePasswordResetToken(String userId) {

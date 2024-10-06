@@ -2,7 +2,7 @@ package com.hanul.pis.authentication.utils.aws.ses;
 
 import com.amazonaws.services.simpleemail.model.SendEmailResult;
 
-public class PasswordReset extends AmazonSES {
+public class PasswordReset implements AmazonSES {
     private static final String SUBJECT = "Cererea dvs de schimbare a parolei";
 
     private static final String FULL_PATH = "$url/reset/$token";

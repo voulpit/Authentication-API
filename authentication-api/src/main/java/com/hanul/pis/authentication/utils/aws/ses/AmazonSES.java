@@ -5,10 +5,9 @@ import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailServiceClientBuilder;
 import com.amazonaws.services.simpleemail.model.*;
 
-public class AmazonSES {
-    private static final String FROM = "Hanul Pisicilor <georgiana.tache@hotmail.com>";
-
-    public SendEmailResult sendEmail(String destination, String subject, String htmlBody, String textBody) {
+public interface AmazonSES {
+    default SendEmailResult sendEmail(String destination, String subject, String htmlBody, String textBody) {
+        String FROM = "Hanul Pisicilor <georgiana.tache@hotmail.com>";
         AmazonSimpleEmailService client = AmazonSimpleEmailServiceClientBuilder.standard().withRegion(Regions.EU_CENTRAL_1).build();
         SendEmailRequest request = new SendEmailRequest()
                 .withDestination(new Destination().withToAddresses(destination))

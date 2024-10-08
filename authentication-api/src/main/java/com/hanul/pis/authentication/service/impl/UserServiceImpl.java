@@ -1,14 +1,19 @@
 package com.hanul.pis.authentication.service.impl;
 
 import com.hanul.pis.authentication.infra.entity.AddressEntity;
+import com.hanul.pis.authentication.infra.entity.RoleEntity;
 import com.hanul.pis.authentication.infra.entity.UserEntity;
 import com.hanul.pis.authentication.infra.repo.AddressRepository;
+import com.hanul.pis.authentication.infra.repo.RoleRepository;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
 import com.hanul.pis.authentication.model.dto.shared.AddressDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
 import com.hanul.pis.authentication.model.exception.UserValidationException;
+import com.hanul.pis.authentication.security.UserPrincipal;
+import com.hanul.pis.authentication.service.AuditService;
 import com.hanul.pis.authentication.service.CachingService;
 import com.hanul.pis.authentication.service.UserService;
+import com.hanul.pis.authentication.utils.AuditEvent;
 import com.hanul.pis.authentication.utils.ErrorMessages;
 import com.hanul.pis.authentication.utils.RegistrationUtils;
 import com.hanul.pis.authentication.utils.aws.ses.EmailVerification;
@@ -20,7 +25,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -47,6 +53,10 @@ public class UserServiceImpl implements UserService {
     private boolean useCaching = false;
     @Autowired
     private AddressRepository addressRepository;
+    @Autowired
+    private RoleRepository roleRepository;
+    @Autowired
+    private AuditService auditService;
 
     @PostConstruct
     public void initialize() {
@@ -59,52 +69,81 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserDto createUser(UserDto userDto) throws UserValidationException {
-        if (useCaching) {
-            if (cachingService.findUsername(userDto.getEmail())) {
-                throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+        UserEntity userEntity = null;
+        UserDto response = null;
+
+        try {
+            if (useCaching) {
+                if (cachingService.findUsername(userDto.getEmail())) {
+                    throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+                }
+            } else {
+                UserEntity user = userRepository.findByEmail(userDto.getEmail());
+                if (user != null) {
+                    throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+                }
             }
-        } else {
-            UserEntity user = userRepository.findByEmail(userDto.getEmail());
-            if (user != null) {
-                throw new UserValidationException(ErrorMessages.EMAIL_ALREADY_EXISTS);
+
+            ModelMapper modelMapper = new ModelMapper();
+            userEntity = modelMapper.map(userDto, UserEntity.class);
+
+            if (userEntity.getAddresses() != null) {
+                for (AddressEntity addressDto : userEntity.getAddresses()) {
+                    addressDto.setPublicId(registrationUtils.generateAddressId(ADDRESS_ID_LENGTH));
+                    addressDto.setUserEntity(userEntity);
+                }
             }
+
+            userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
+            userEntity.setUserId(registrationUtils.generateUserId(USER_ID_LENGTH));
+            userEntity.setEmailVerificationToken(registrationUtils.generateEmailVerificationToken(userEntity.getUserId()));
+
+            List<RoleEntity> roles = new ArrayList<>();
+            for (String role : userDto.getRoles()) {
+                RoleEntity roleEntity = roleRepository.findByName(role);
+                if (roleEntity != null) {
+                    roles.add(roleEntity);
+                }
+            }
+            userEntity.setRoles(roles);
+
+            userEntity = userRepository.save(userEntity);
+
+            response = modelMapper.map(userEntity, UserDto.class);
+            new EmailVerification().verifyEmail(environment.getProperty("url"), response);
+
+            if (useCaching) {
+                cachingService.addUsername(userDto.getEmail());
+            }
+
+            auditService.insertAudit(userEntity, userEntity, AuditEvent.CREATE_USER, true, userDto.getEmail());
+
+        } catch (Exception e) {
+            auditService.insertAudit(userEntity, userEntity, AuditEvent.CREATE_USER, userEntity != null, userDto.getEmail() + "; " + e.getMessage());
         }
 
-        ModelMapper modelMapper = new ModelMapper();
-        UserEntity userEntity = modelMapper.map(userDto, UserEntity.class);
-
-        if (userEntity.getAddresses() != null) {
-            for (AddressEntity addressDto : userEntity.getAddresses()) {
-                addressDto.setPublicId(registrationUtils.generateAddressId(ADDRESS_ID_LENGTH));
-                addressDto.setUserEntity(userEntity);
-            }
-        }
-
-        userEntity.setEncryptedPassword(bCryptPasswordEncoder.encode(userDto.getPassword()));
-        userEntity.setUserId(registrationUtils.generateUserId(USER_ID_LENGTH));
-        userEntity.setEmailVerificationToken(registrationUtils.generateEmailVerificationToken(userEntity.getUserId()));
-        userEntity = userRepository.save(userEntity);
-
-        UserDto response = modelMapper.map(userEntity, UserDto.class);
-        new EmailVerification().verifyEmail(environment.getProperty("url"), response);
-
-        if (useCaching) {
-            cachingService.addUsername(userDto.getEmail());
-        }
         return response;
     }
 
     @Override
     public UserDto updateUser(String userId, UserDto userDto) {
-        UserEntity userEntity = userRepository.findByUserId(userId);
-        checkUserExists(userEntity, userId);
+        UserEntity userEntity = null;
+        UserDto updatedUser = null;
+        try {
+            userEntity = userRepository.findByUserId(userId);
+            checkUserExists(userEntity, userId);
 
-        userEntity.setFirstName(userDto.getFirstName());
-        userEntity.setLastName(userDto.getLastName());
-        userEntity = userRepository.save(userEntity);
+            userEntity.setFirstName(userDto.getFirstName());
+            userEntity.setLastName(userDto.getLastName());
+            userEntity = userRepository.save(userEntity);
 
-        UserDto updatedUser = new UserDto();
-        BeanUtils.copyProperties(userEntity, updatedUser);
+            updatedUser = new UserDto();
+            BeanUtils.copyProperties(userEntity, updatedUser);
+
+            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.UPDATE_USER, true, userDto.getEmail());
+        } catch (Exception e) {
+            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.UPDATE_USER, updatedUser != null, userDto.getEmail() + "; " + e.getMessage());
+        }
         return updatedUser;
     }
 
@@ -112,7 +151,7 @@ public class UserServiceImpl implements UserService {
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         UserEntity userEntity = userRepository.findByEmail(username);
         checkUserExists(userEntity, username);
-        return new User(username, userEntity.getEncryptedPassword(), userEntity.getActiveInd(), true, true, true,  new ArrayList<>());
+        return new UserPrincipal(userEntity);
     }
 
     @Override
@@ -137,12 +176,22 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean deleteUser(String userId) {
-        UserEntity userEntity = userRepository.findByUserId(userId);
-        checkUserExists(userEntity, userId);
+        UserEntity userEntity = null;
+        try {
+            userEntity = userRepository.findByUserId(userId);
+            checkUserExists(userEntity, userId);
 
-        userEntity.setDeletedInd(true);
-        userEntity = userRepository.save(userEntity);
-        return userEntity.getDeletedInd();
+            userEntity.setDeletedInd(true);
+            userEntity = userRepository.save(userEntity);
+
+            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.DELETE_USER, userEntity.getDeletedInd(), userEntity.getEmail());
+            return userEntity.getDeletedInd();
+
+        } catch (Exception e) {
+            boolean deleted = userEntity != null ? userEntity.getDeletedInd() : false;
+            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.DELETE_USER, deleted, e.getMessage());
+            return deleted;
+        }
     }
 
     @Override
@@ -240,5 +289,14 @@ public class UserServiceImpl implements UserService {
         if (userEntity == null || userEntity.getDeletedInd()) {
             throw new UsernameNotFoundException(ErrorMessages.NO_RECORD_FOUND + searchedBy);
         }
+    }
+
+    private UserEntity getPrincipalUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+        String userId = ((UserPrincipal) authentication.getPrincipal()).getUserId();
+        return userRepository.findByUserId(userId);
     }
 }

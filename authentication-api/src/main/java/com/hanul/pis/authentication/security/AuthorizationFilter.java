@@ -1,5 +1,7 @@
 package com.hanul.pis.authentication.security;
 
+import com.hanul.pis.authentication.infra.entity.UserEntity;
+import com.hanul.pis.authentication.infra.repo.UserRepository;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import jakarta.servlet.FilterChain;
@@ -13,15 +15,17 @@ import org.springframework.security.web.authentication.www.BasicAuthenticationFi
 
 import javax.crypto.SecretKey;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Base64;
 
 /**
  * Checks the token used for various (confidential) requests and puts it in the SecurityContext, if valid
  */
 public class AuthorizationFilter extends BasicAuthenticationFilter {
-    public AuthorizationFilter(AuthenticationManager authenticationManager) {
+    private final UserRepository userRepository;
+
+    public AuthorizationFilter(AuthenticationManager authenticationManager, UserRepository userRepository) {
         super(authenticationManager);
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -59,6 +63,8 @@ public class AuthorizationFilter extends BasicAuthenticationFilter {
         }
 
         // validation is successful
-        return new UsernamePasswordAuthenticationToken(subject, null, new ArrayList<>());
+        UserEntity userEntity = userRepository.findByEmail(subject);
+        UserPrincipal userPrincipal = new UserPrincipal(userEntity);
+        return new UsernamePasswordAuthenticationToken(userPrincipal, null, userPrincipal.getAuthorities());
     }
 }

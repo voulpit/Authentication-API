@@ -2,7 +2,10 @@ package com.hanul.pis.authentication.controller;
 
 import com.hanul.pis.authentication.model.dto.*;
 import com.hanul.pis.authentication.model.dto.shared.AddressDto;
+import com.hanul.pis.authentication.model.dto.shared.AuditDto;
 import com.hanul.pis.authentication.model.dto.shared.UserDto;
+import com.hanul.pis.authentication.security.SecurityConstants;
+import com.hanul.pis.authentication.service.AuditService;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.Constants;
 import jakarta.validation.Valid;
@@ -14,6 +17,7 @@ import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -25,7 +29,10 @@ import java.util.List;
 public class UserController {
     @Autowired
     private UserService userService;
+    @Autowired
+    private AuditService auditService;
 
+    @Secured(SecurityConstants.USER_ROLE)
     @GetMapping(path = "/{userId}",
                 produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // order matters: XML by default if "accept" header isn't defined
     public UserDetailsDto getUserDetails(@PathVariable String userId) {
@@ -78,6 +85,7 @@ public class UserController {
     public EntityModel<UserDetailsDto> createUser(@Valid @RequestBody CreateUserRequestDto userDetails) {
         ModelMapper modelMapper = new ModelMapper();
         UserDto userDto = modelMapper.map(userDetails, UserDto.class);
+        userDto.setRoles(List.of(SecurityConstants.USER_ROLE));
 
         UserDto createdUser = userService.createUser(userDto);
         UserDetailsDto result = modelMapper.map(createdUser, UserDetailsDto.class);
@@ -168,5 +176,15 @@ public class UserController {
         result.setSuccessful(done);
 
         return result;
+    }
+
+    @Secured(SecurityConstants.INSPECTOR_ROLE)
+    // @PreAuthorize("hasRole('INSPECTOR') or #userId == principal.userId") // inspector or user who checks his own history
+    // (#userId = the path variable, principal = the currently logged user)
+    // @PreAuthorize("hasAuthority('AUDIT_AUTH')")
+    // @PostAuthorize("returnObject.size > 0")
+    @GetMapping(path = "/audit/{userId}", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
+    public List<AuditDto> getAuditHistoryForUser(@PathVariable String userId) {
+        return auditService.getAuditForAffectedUser(userId);
     }
 }

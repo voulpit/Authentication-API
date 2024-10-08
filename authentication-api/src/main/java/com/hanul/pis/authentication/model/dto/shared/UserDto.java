@@ -15,6 +15,7 @@ public class UserDto {
     private String emailVerificationToken;
     private Boolean emailVerificationStatus = false;
     private List<AddressEntity> addresses;
+    private List<String> roles;
 
     public Long getId() {
         return id;
@@ -94,5 +95,13 @@ public class UserDto {
 
     public void setAddresses(List<AddressEntity> addresses) {
         this.addresses = addresses;
+    }
+
+    public List<String> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
     }
 }

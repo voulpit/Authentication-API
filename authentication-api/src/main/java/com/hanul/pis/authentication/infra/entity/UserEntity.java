@@ -37,8 +37,17 @@ public class UserEntity {
     @Column(nullable = false)
     private Boolean deletedInd = false;
 
-    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL) // propagate persist operation to them too
+    @OneToMany(mappedBy = "userEntity", cascade = CascadeType.ALL) // propagate all operations to them too
     private List<AddressEntity> addresses;
+
+    @ManyToMany(fetch = FetchType.EAGER)  // roles immediately available at authentication
+    @JoinTable(name="users_roles",
+               joinColumns = @JoinColumn(name="users_id", referencedColumnName = "id"),
+               inverseJoinColumns = @JoinColumn(name="roles_id", referencedColumnName = "id"))
+    private List<RoleEntity> roles;
+
+    @OneToMany(mappedBy = "affectedUser")
+    private List<AuditEntity> auditEntities;
 
     public Long getId() {
         return id;
@@ -134,5 +143,21 @@ public class UserEntity {
 
     public void setAddresses(List<AddressEntity> addresses) {
         this.addresses = addresses;
+    }
+
+    public List<RoleEntity> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(List<RoleEntity> roles) {
+        this.roles = roles;
+    }
+
+    public List<AuditEntity> getAuditEntities() {
+        return auditEntities;
+    }
+
+    public void setAuditEntities(List<AuditEntity> auditEntities) {
+        this.auditEntities = auditEntities;
     }
 }

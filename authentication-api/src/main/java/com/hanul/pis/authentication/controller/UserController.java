@@ -32,7 +32,7 @@ public class UserController {
     @Autowired
     private AuditService auditService;
 
-    @Secured(SecurityConstants.USER_ROLE)
+    @Secured({SecurityConstants.USER_ROLE, SecurityConstants.ADMIN_ROLE})
     @GetMapping(path = "/{userId}",
                 produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // order matters: XML by default if "accept" header isn't defined
     public UserDetailsDto getUserDetails(@PathVariable String userId) {

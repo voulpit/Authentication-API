@@ -36,7 +36,11 @@ public class AuditServiceImpl implements AuditService {
         auditEntity.setAgentUser(agentUser);
         auditEntity.setAffectedUser(affectedUser);
         auditEntity.setSuccess(success);
-        auditEntity.setComments(comments.substring(0, Math.min(AUDIT_COMMENTS_LENGTH, comments.length())));
+
+        auditEntity.setComments("");
+        if (comments != null) {
+            auditEntity.setComments(comments.substring(0, Math.min(AUDIT_COMMENTS_LENGTH, comments.length())));
+        }
         auditEntity.setTimestamp(new Date());
 
         Optional<AuditEventEntity> auditEventEntity = auditEventRepository.findById(auditEvent.getId());

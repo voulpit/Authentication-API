@@ -97,6 +97,11 @@
 			<artifactId>aws-java-sdk-ses</artifactId>
 			<version>1.12.772</version>
 		</dependency>
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>compile</scope>
+		</dependency>
 	</dependencies>
 
 	<build>

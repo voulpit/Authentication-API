@@ -3,6 +3,7 @@ package com.hanul.pis.authentication.security;
 import com.hanul.pis.authentication.infra.repo.UserRepository;
 import com.hanul.pis.authentication.service.AuditService;
 import com.hanul.pis.authentication.service.UserService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -12,6 +13,7 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -24,6 +26,9 @@ public class WebSecurity {
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
     private final UserRepository userRepository;
     private final AuditService auditService;
+
+    @Value("${spring.profiles.active:Unknown}")
+    private String activeProfile;
 
     public WebSecurity(UserService userService, BCryptPasswordEncoder bCryptPasswordEncoder, UserRepository userRepository,
                        AuditService auditService) {
@@ -54,12 +59,18 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.POST, SecurityConstants.PASSWORD_RESET_URL).permitAll()
                         .requestMatchers(HttpMethod.OPTIONS).permitAll() // Chrome first sends an Options request....must be successful
                         .requestMatchers(HttpMethod.DELETE).hasAuthority(SecurityConstants.DELETE_AUTHORITY)
+                        .requestMatchers(SecurityConstants.H2_CONSOLE).permitAll()
                         .requestMatchers(SecurityConstants.ERROR_URL).permitAll() // shows 500 when it's 500, instead of 403
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
                 .addFilter(authenticationFilter)
                 .addFilter(new AuthorizationFilter(authenticationManager, userRepository))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+
+        if ("test".equals(activeProfile)) {
+            // disable frame options in headers for h2-console
+            httpSecurity.headers(headers -> headers.frameOptions(HeadersConfigurer.FrameOptionsConfig::disable));
+        }
 
         return httpSecurity.build();
     }

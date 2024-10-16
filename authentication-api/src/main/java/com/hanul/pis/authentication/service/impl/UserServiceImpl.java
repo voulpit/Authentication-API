@@ -140,7 +140,7 @@ public class UserServiceImpl implements UserService {
             updatedUser = new UserDto();
             BeanUtils.copyProperties(userEntity, updatedUser);
 
-            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.UPDATE_USER, true, userDto.getEmail());
+            auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.UPDATE_USER, true, "Updated user " + userEntity.getEmail());
         } catch (Exception e) {
             auditService.insertAudit(getPrincipalUser(), userEntity, AuditEvent.UPDATE_USER, updatedUser != null, userDto.getEmail() + "; " + e.getMessage());
         }

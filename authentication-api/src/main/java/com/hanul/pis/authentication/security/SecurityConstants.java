@@ -6,15 +6,27 @@ import org.springframework.core.env.Environment;
 public class SecurityConstants {
     public static final long EXPIRATION_TIME = 864000000; // 10 days
     public static final long PASSWORD_RESET_EXP_TIME = 3600*1000; // 1 hour
-    public static final String TOKEN_PREFIX = "Petri ";
+    public static final String TOKEN_PREFIX = "Bearer "; // forced by Swagger to use the default name
     public static final String HEADER_STRING = "Authorization";
 
     public static final String SIGN_UP_PATH = "/users";
+    public static final String LOGIN_PATH = "/get-me-in";
     public static final String VERIFICATION_EMAIL_URL = "/users/email-verification";
     public static final String PASSWORD_RESET_REQUEST_URL = "/users/password-reset-request";
     public static final String PASSWORD_RESET_URL = "/users/password-reset";
     public static final String H2_CONSOLE = "/h2-console/**";
     public static final String ERROR_URL = "/error";
+    public static final String[] SWAGGER_URLS = {
+            "/api-docs",
+            "/swagger-resources",
+            "/swagger-resources/**",
+            "/configuration/ui",
+            "/configuration/security",
+            "/swagger-ui.html",
+            "/webjars/**",
+            "/api-docs/**",
+            "/swagger-ui/**"
+    };
 
     public static final String ADMIN_ROLE = "ADMIN";
     public static final String USER_ROLE = "USER";

@@ -8,6 +8,7 @@ import com.hanul.pis.authentication.security.SecurityConstants;
 import com.hanul.pis.authentication.service.AuditService;
 import com.hanul.pis.authentication.service.UserService;
 import com.hanul.pis.authentication.utils.Constants;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.BeanUtils;
@@ -32,6 +33,7 @@ public class UserController {
     @Autowired
     private AuditService auditService;
 
+    @Operation(description = "Get user details")
     @Secured({SecurityConstants.USER_ROLE, SecurityConstants.ADMIN_ROLE})
     @GetMapping(path = "/{userId}",
                 produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE}) // order matters: XML by default if "accept" header isn't defined
@@ -44,6 +46,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Get user addresses")
     @GetMapping(path = "/{userId}/addresses",
                 produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public CollectionModel<AddressDto> getAddresses(@PathVariable String userId) {
@@ -59,6 +62,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Get address for user")
     @GetMapping(path = "/{userId}/address/{addressId}",
                 produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public AddressDto getAddress(@PathVariable String userId, @PathVariable String addressId) {
@@ -80,6 +84,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Create new user")
     @PostMapping(consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
                  produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public EntityModel<UserDetailsDto> createUser(@Valid @RequestBody CreateUserRequestDto userDetails) {
@@ -99,6 +104,7 @@ public class UserController {
         return EntityModel.of(result, Arrays.asList(userLink, selfLink));
     }
 
+    @Operation(description = "Update user")
     @PutMapping(path="/{userId}",
             consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -113,6 +119,7 @@ public class UserController {
         return responseDto;
     }
 
+    @Operation(description = "Delete user")
     @DeleteMapping(path="/{userId}",
             consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE},
             produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
@@ -129,6 +136,7 @@ public class UserController {
      * Pagination starts from 0
      * @return undeleted users
      */
+    @Operation(description = "Get list of users")
     @GetMapping(produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public List<UserDetailsDto> getUsers(@RequestParam(value="page", defaultValue = "0") int page,
                                          @RequestParam(value="limit", defaultValue = "10") int limit) {
@@ -144,6 +152,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Verify user email")
     /* After user clicks the verification link in his email ~ /users/email-verification?token=skjdkjdfkld */
     @GetMapping(path = "email-verification", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public OperationStatusDto verifyEmailToken(@RequestParam(value="token") String token) {
@@ -156,6 +165,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Request to change user password")
     @GetMapping(path = "password-reset-request", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public OperationStatusDto requestResetPassword(@RequestParam(value="email") String email) {
         OperationStatusDto result = new OperationStatusDto();
@@ -167,6 +177,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "User password change")
     @PostMapping(path = "password-reset", produces = {MediaType.APPLICATION_XML_VALUE, MediaType.APPLICATION_JSON_VALUE})
     public OperationStatusDto resetPassword(@RequestBody PasswordResetDto passwordResetDto) {
         OperationStatusDto result = new OperationStatusDto();
@@ -178,6 +189,7 @@ public class UserController {
         return result;
     }
 
+    @Operation(description = "Inspect audit history for a specific user")
     @Secured(SecurityConstants.INSPECTOR_ROLE)
     // @PreAuthorize("hasRole('INSPECTOR') or #userId == principal.userId") // inspector or user who checks his own history
     // (#userId = the path variable, principal = the currently logged user)

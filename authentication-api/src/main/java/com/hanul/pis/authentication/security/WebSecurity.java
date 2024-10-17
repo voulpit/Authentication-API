@@ -48,7 +48,7 @@ public class WebSecurity {
 
         // customize login URL (default is /login)
         AuthenticationFilter authenticationFilter = new AuthenticationFilter(authenticationManager, auditService);
-        authenticationFilter.setFilterProcessesUrl("/get-me-in");
+        authenticationFilter.setFilterProcessesUrl(SecurityConstants.LOGIN_PATH);
 
         httpSecurity
                 .csrf(AbstractHttpConfigurer::disable)
@@ -61,6 +61,7 @@ public class WebSecurity {
                         .requestMatchers(HttpMethod.DELETE).hasAuthority(SecurityConstants.DELETE_AUTHORITY)
                         .requestMatchers(SecurityConstants.H2_CONSOLE).permitAll()
                         .requestMatchers(SecurityConstants.ERROR_URL).permitAll() // shows 500 when it's 500, instead of 403
+                        .requestMatchers(SecurityConstants.SWAGGER_URLS).permitAll()
                         .anyRequest().authenticated())
                 .authenticationManager(authenticationManager)
                 .addFilter(authenticationFilter)
